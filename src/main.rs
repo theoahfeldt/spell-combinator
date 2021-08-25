@@ -1,10 +1,14 @@
 use bevy::prelude::*;
-use spell_combinator::unit::{self, Position};
+use spell_combinator::mouseclick::{self, MainCamera, MouseClick};
+use spell_combinator::unit::{self, TextureHandles};
 
 fn main() {
     App::build()
         .add_plugins(DefaultPlugins)
+        .add_event::<MouseClick>()
         .add_startup_system(setup.system())
+        .add_system(mouseclick::mouse_button_system.system().label("mouseclick"))
+        .add_system(unit::spawn_on_click_system.system().after("mouseclick"))
         .add_system(unit::update_position_system.system())
         .add_system(animate_sprite_system.system())
         .run();
@@ -29,43 +33,11 @@ fn setup(
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let texture_handle = asset_server.load("textures/rpg/chars/gabe/gabe-idle-run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(24., 24.), 7, 1);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    let enemy_texture_handle = asset_server.load("textures/rpg/mobs/kobold-idle.png");
-    let enemy_texture_atlas =
-        TextureAtlas::from_grid(enemy_texture_handle, Vec2::new(24., 24.), 15, 1);
-    let enemy_texture_atlas_handle = texture_atlases.add(enemy_texture_atlas);
-
-    let enemy_positions = vec![
-        (Position { x: -200., y: 150. }, Color::WHITE),
-        (Position { x: 0., y: 120. }, Color::YELLOW),
-        (Position { x: 220., y: 0. }, Color::TOMATO),
-        (Position { x: -70., y: -350. }, Color::SALMON),
-    ];
-
-    commands.spawn_bundle(OrthographicCameraBundle::new_2d());
+    let texture_handles = TextureHandles::new(&asset_server, &mut texture_atlases);
+    commands.insert_resource(texture_handles.clone());
     commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
-            transform: Transform::from_scale(Vec3::splat(2.0)),
-            ..Default::default()
-        })
-        .insert(Timer::from_seconds(0.1, true))
-        .insert(Position { x: 0., y: 0. });
+        .spawn_bundle(OrthographicCameraBundle::new_2d())
+        .insert(MainCamera);
 
-    enemy_positions.into_iter().for_each(|(pos, col)| {
-        commands
-            .spawn_bundle(SpriteSheetBundle {
-                texture_atlas: enemy_texture_atlas_handle.clone(),
-                sprite: TextureAtlasSprite {
-                    color: col,
-                    ..Default::default()
-                },
-                transform: Transform::from_scale(Vec3::splat(2.)),
-                ..Default::default()
-            })
-            .insert(Timer::from_seconds(0.1, true))
-            .insert(pos);
-    })
+    unit::setup_units(commands, texture_handles)
 }
