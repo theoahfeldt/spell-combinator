@@ -9,7 +9,7 @@ mod tests {
     fn test_spellang() {
         let mut state = State { hp: 10 };
         let mut dag = example_dag();
-        dag.execute(&mut state);
+        dag.execute(&mut state).unwrap();
         assert_eq!(state, State { hp: 9 });
     }
 }
