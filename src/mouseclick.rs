@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
+#[derive(Component)]
 pub struct MainCamera;
+
 #[derive(Debug)]
 pub struct MouseClick(pub Vec2);
 
@@ -19,7 +21,7 @@ pub fn mouse_button_system(
     let win = windows.get_primary().unwrap();
     if mouse_button_input.just_released(MouseButton::Left) {
         if let Some(pos) = win.cursor_position() {
-            let world_coords = compute_world_coords(pos, win, q_camera.single().unwrap());
+            let world_coords = compute_world_coords(pos, win, q_camera.single());
             ev_mouseclick.send(MouseClick(world_coords));
         }
     }

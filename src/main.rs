@@ -1,16 +1,15 @@
 use bevy::prelude::*;
 use spell_combinator::mouseclick::{self, MainCamera, MouseClick};
-use spell_combinator::unit::{self, TextureHandles};
+use spell_combinator::unit::{TextureHandles, UnitPlugin};
 
 fn main() {
-    App::build()
+    App::new()
         .add_plugins(DefaultPlugins)
         .add_event::<MouseClick>()
-        .add_startup_system(setup.system())
-        .add_system(mouseclick::mouse_button_system.system().label("mouseclick"))
-        .add_system(unit::spawn_on_click_system.system().after("mouseclick"))
-        .add_system(unit::update_position_system.system())
-        .add_system(animate_sprite_system.system())
+        .add_startup_system(setup)
+        .add_plugin(UnitPlugin)
+        .add_system(mouseclick::mouse_button_system.label("mouseclick"))
+        .add_system(animate_sprite_system)
         .run();
 }
 
@@ -23,7 +22,7 @@ fn animate_sprite_system(
         timer.tick(time.delta());
         if timer.finished() {
             let texture_atlas = texture_atlases.get(texture_atlas_handle).unwrap();
-            sprite.index = ((sprite.index as usize + 1) % texture_atlas.textures.len()) as u32;
+            sprite.index = (sprite.index as usize + 1) % texture_atlas.textures.len();
         }
     }
 }
@@ -34,10 +33,8 @@ fn setup(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
     let texture_handles = TextureHandles::new(&asset_server, &mut texture_atlases);
-    commands.insert_resource(texture_handles.clone());
+    commands.insert_resource(texture_handles);
     commands
         .spawn_bundle(OrthographicCameraBundle::new_2d())
         .insert(MainCamera);
-
-    unit::setup_units(commands, texture_handles)
 }

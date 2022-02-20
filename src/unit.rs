@@ -7,6 +7,7 @@ pub struct Target {
     pub radius: f32,
 }
 
+#[derive(Component)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
@@ -67,6 +68,16 @@ impl TextureHandles {
     }
 }
 
+pub struct UnitPlugin;
+
+impl Plugin for UnitPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_startup_system_to_stage(StartupStage::PostStartup, setup_units)
+            .add_system(spawn_on_click_system.after("mouseclick"))
+            .add_system(update_position_system);
+    }
+}
+
 pub fn update_position_system(mut query: Query<(&Position, &mut Transform)>) {
     for (pos, mut transform) in query.iter_mut() {
         transform.translation = Vec3::new(pos.x, pos.y, 0.);
@@ -98,7 +109,7 @@ pub fn spawn_unit(
         .insert(pos);
 }
 
-pub fn setup_units(mut commands: Commands, texture_handles: TextureHandles) {
+pub fn setup_units(mut commands: Commands, texture_handles: Res<TextureHandles>) {
     let enemy_positions = vec![
         (Position { x: -200., y: 160. }, Color::WHITE),
         (Position { x: 0., y: 120. }, Color::YELLOW),
