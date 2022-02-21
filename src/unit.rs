@@ -1,23 +1,9 @@
-use crate::mouseclick::MouseClick;
+use crate::{
+    mouseclick::MouseClick,
+    types::{Position, UnitType},
+};
 use bevy::prelude::*;
 use std::collections::HashMap;
-
-pub struct Target {
-    pub center: Position,
-    pub radius: f32,
-}
-
-#[derive(Component)]
-pub struct Position {
-    pub x: f32,
-    pub y: f32,
-}
-
-#[derive(Copy, Clone, Hash, Eq, PartialEq)]
-pub enum UnitType {
-    Player,
-    Kobold,
-}
 
 pub struct SpriteData {
     file: &'static str,
@@ -84,7 +70,7 @@ pub fn update_position_system(mut query: Query<(&Position, &mut Transform)>) {
     }
 }
 
-pub fn spawn_unit(
+fn spawn_unit(
     commands: &mut Commands,
     texture_handles: &TextureHandles,
     t: UnitType,
@@ -109,7 +95,7 @@ pub fn spawn_unit(
         .insert(pos);
 }
 
-pub fn setup_units(mut commands: Commands, texture_handles: Res<TextureHandles>) {
+fn setup_units(mut commands: Commands, texture_handles: Res<TextureHandles>) {
     let enemy_positions = vec![
         (Position { x: -200., y: 160. }, Color::WHITE),
         (Position { x: 0., y: 120. }, Color::YELLOW),
@@ -130,7 +116,7 @@ pub fn setup_units(mut commands: Commands, texture_handles: Res<TextureHandles>)
     })
 }
 
-pub fn spawn_on_click_system(
+fn spawn_on_click_system(
     mut commands: Commands,
     texture_handles: Res<TextureHandles>,
     mut ev_mouseclick: EventReader<MouseClick>,
