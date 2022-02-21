@@ -1,4 +1,4 @@
-use crate::types::Position;
+use crate::{types::Position, ui::ButtonClick};
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -23,12 +23,18 @@ pub fn move_system(moves: Query<&Move>, mut pos: Query<&mut Position>) {
     }
 }
 
-pub fn add_move_system(mut commands: Commands, query: Query<Entity, With<Position>>) {
-    for e in query.iter() {
-        commands.spawn().insert(Move {
-            unit: e,
-            target: Position { x: 0.0, y: 0.0 },
-        });
+pub fn add_move_system(
+    mut commands: Commands,
+    query: Query<Entity, With<Position>>,
+    mut ev_buttonclick: EventReader<ButtonClick>,
+) {
+    for _click in ev_buttonclick.iter() {
+        for e in query.iter() {
+            commands.spawn().insert(Move {
+                unit: e,
+                target: Position { x: 0.0, y: 0.0 },
+            });
+        }
     }
 }
 

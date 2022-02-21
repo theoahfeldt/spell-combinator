@@ -1,15 +1,18 @@
 use bevy::prelude::*;
 use spell_combinator::effect::MovePlugin;
 use spell_combinator::mouseclick::{self, MainCamera, MouseClick};
+use spell_combinator::ui::{ButtonClick, UiPlugin};
 use spell_combinator::unit::{TextureHandles, UnitPlugin};
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_event::<MouseClick>()
+        .add_event::<ButtonClick>()
         .add_startup_system(setup)
         .add_plugin(UnitPlugin)
         .add_plugin(MovePlugin)
+        .add_plugin(UiPlugin)
         .add_system(mouseclick::mouse_button_system.label("mouseclick"))
         .add_system(animate_sprite_system)
         .run();
