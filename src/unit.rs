@@ -1,5 +1,4 @@
 use crate::{
-    mouseclick::MouseClick,
     resources::TextureHandles,
     types::{Position, UnitType},
 };
@@ -10,14 +9,13 @@ pub struct UnitPlugin;
 impl Plugin for UnitPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_units)
-            .add_system(spawn_on_click_system.after("mouseclick"))
             .add_system(update_position_system);
     }
 }
 
 pub fn update_position_system(mut query: Query<(&Position, &mut Transform)>) {
     for (pos, mut transform) in query.iter_mut() {
-        transform.translation = Vec3::new(pos.x, pos.y, 0.);
+        transform.translation = pos.0.extend(0.);
     }
 }
 
@@ -32,8 +30,8 @@ fn spawn_unit(
         .spawn_bundle(SpriteSheetBundle {
             texture_atlas: texture_handles.0.get(&t).unwrap().clone(),
             transform: Transform {
-                translation: Vec3::new(pos.x, pos.y, 0.),
-                scale: Vec3::splat(2.0),
+                translation: pos.0.extend(0.),
+                scale: Vec3::splat(2.),
                 ..Default::default()
             },
             sprite: TextureAtlasSprite {
@@ -48,18 +46,18 @@ fn spawn_unit(
 
 fn setup_units(mut commands: Commands, texture_handles: Res<TextureHandles>) {
     let enemy_positions = vec![
-        (Position { x: -200., y: 160. }, Color::WHITE),
-        (Position { x: 0., y: 120. }, Color::YELLOW),
-        (Position { x: 220., y: 20. }, Color::CYAN),
-        (Position { x: -70., y: -180. }, Color::ORANGE),
-        (Position { x: -145., y: 280. }, Color::GREEN),
+        (Position(Vec2::new(-200., 160.)), Color::WHITE),
+        (Position(Vec2::new(0., 120.)), Color::YELLOW),
+        (Position(Vec2::new(220., 20.)), Color::CYAN),
+        (Position(Vec2::new(-70., -180.)), Color::ORANGE),
+        (Position(Vec2::new(-145., 280.)), Color::GREEN),
     ];
 
     spawn_unit(
         &mut commands,
         &texture_handles,
         UnitType::Player,
-        Position { x: 0., y: 0. },
+        Position(Vec2::ZERO),
         Color::WHITE,
     );
     enemy_positions.into_iter().for_each(|(pos, col)| {
@@ -67,21 +65,18 @@ fn setup_units(mut commands: Commands, texture_handles: Res<TextureHandles>) {
     })
 }
 
-fn spawn_on_click_system(
-    mut commands: Commands,
-    texture_handles: Res<TextureHandles>,
-    mut ev_mouseclick: EventReader<MouseClick>,
-) {
-    for click in ev_mouseclick.iter() {
-        spawn_unit(
-            &mut commands,
-            &texture_handles,
-            UnitType::Kobold,
-            Position {
-                x: click.0.x,
-                y: click.0.y,
-            },
-            Color::WHITE,
-        )
-    }
-}
+// fn spawn_on_click_system(
+//     mut commands: Commands,
+//     texture_handles: Res<TextureHandles>,
+//     mut ev_mouseclick: EventReader<MouseClick>,
+// ) {
+//     for click in ev_mouseclick.iter() {
+//         spawn_unit(
+//             &mut commands,
+//             &texture_handles,
+//             UnitType::Kobold,
+//             Position(click.0),
+//             Color::WHITE,
+//         )
+//     }
+// }

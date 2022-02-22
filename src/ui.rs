@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::resources::DefaultFont;
+use crate::{effect::MovePrep, mouseclick::MouseClick, resources::DefaultFont, types::Position};
 
 /// This example illustrates how to create a button that changes color and text based on its
 /// interaction state.
@@ -15,32 +15,65 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup).add_system(button_system);
+        app.add_startup_system(setup)
+            .add_system(move_button_system)
+            .add_system(select_target_system)
+            .add_system(update_move_menu_system);
     }
 }
 
-fn button_system(
+fn select_target_system(
+    mut ev_mouseclick: EventReader<MouseClick>,
+    query: Query<(Entity, &Position)>,
+    mut button_query: Query<&mut MovePrep, With<Button>>,
+) {
+    let prep: &mut MovePrep = &mut button_query.iter_mut().next().unwrap();
+    for click in ev_mouseclick.iter() {
+        let mut unit = None;
+        for (e, pos) in query.iter() {
+            if pos.0.distance(click.0) < 5. {
+                unit = Some(e);
+            }
+        }
+        if let Some(_) = unit {
+            prep.unit = unit;
+        } else {
+            prep.target = Some(Position(click.0));
+        }
+    }
+}
+
+fn update_move_menu_system(
+    mut query: Query<(&Name, &mut Text)>,
+    button_query: Query<&MovePrep, With<Button>>,
+) {
+    let prep = button_query.iter().next().unwrap();
+    for (name, ref mut text) in query.iter_mut() {
+        if *name == Name::new("MoveText") {
+            text.sections[0].value = format!("Unit: {:?}\n Target: {:?}", prep.unit, prep.target);
+        }
+    }
+}
+
+fn move_button_system(
+    mut commands: Commands,
     mut interaction_query: Query<
-        (&Interaction, &mut UiColor, &Children),
+        (&Interaction, &mut UiColor, &MovePrep),
         (Changed<Interaction>, With<Button>),
     >,
-    mut text_query: Query<&mut Text>,
-    mut ev_buttonclick: EventWriter<ButtonClick>,
 ) {
-    for (interaction, mut color, children) in interaction_query.iter_mut() {
-        let mut text = text_query.get_mut(children[0]).unwrap();
+    for (interaction, mut color, prep) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Clicked => {
-                text.sections[0].value = "Press".to_string();
                 *color = PRESSED_BUTTON.into();
-                ev_buttonclick.send(ButtonClick);
+                if let Some(m) = prep.compile() {
+                    commands.spawn().insert(m);
+                }
             }
             Interaction::Hovered => {
-                text.sections[0].value = "Hover".to_string();
                 *color = HOVERED_BUTTON.into();
             }
             Interaction::None => {
-                text.sections[0].value = "Button".to_string();
                 *color = NORMAL_BUTTON.into();
             }
         }
@@ -62,7 +95,7 @@ fn setup(mut commands: Commands, font: Res<DefaultFont>) {
             ..Default::default()
         })
         .with_children(|parent| {
-            // Effect Menu
+            // Move Menu
             parent
                 .spawn_bundle(NodeBundle {
                     style: Style {
@@ -73,21 +106,24 @@ fn setup(mut commands: Commands, font: Res<DefaultFont>) {
                         align_items: AlignItems::Center,
                         ..Default::default()
                     },
+                    color: Color::NONE.into(),
                     ..Default::default()
                 })
                 .with_children(|parent| {
-                    parent.spawn_bundle(TextBundle {
-                        text: Text::with_section(
-                            "Text",
-                            TextStyle {
-                                font: font.0.clone(),
-                                font_size: 40.0,
-                                color: Color::rgb(0.9, 0.9, 0.9),
-                            },
-                            Default::default(),
-                        ),
-                        ..Default::default()
-                    });
+                    parent
+                        .spawn_bundle(TextBundle {
+                            text: Text::with_section(
+                                "Unit: None\n Target: None",
+                                TextStyle {
+                                    font: font.0.clone(),
+                                    font_size: 20.0,
+                                    color: Color::rgb(0.9, 0.9, 0.9),
+                                },
+                                Default::default(),
+                            ),
+                            ..Default::default()
+                        })
+                        .insert(Name::new("MoveText"));
                     parent
                         .spawn_bundle(ButtonBundle {
                             style: Style {
@@ -103,10 +139,11 @@ fn setup(mut commands: Commands, font: Res<DefaultFont>) {
                             color: NORMAL_BUTTON.into(),
                             ..Default::default()
                         })
+                        .insert(MovePrep::new())
                         .with_children(|parent| {
                             parent.spawn_bundle(TextBundle {
                                 text: Text::with_section(
-                                    "Button",
+                                    "Execute",
                                     TextStyle {
                                         font: font.0.clone(),
                                         font_size: 40.0,

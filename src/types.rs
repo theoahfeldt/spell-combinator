@@ -5,11 +5,8 @@ pub struct Target {
     pub radius: f32,
 }
 
-#[derive(Component)]
-pub struct Position {
-    pub x: f32,
-    pub y: f32,
-}
+#[derive(Component, Clone, Debug)]
+pub struct Position(pub Vec2);
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub enum UnitType {
