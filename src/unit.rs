@@ -1,64 +1,15 @@
 use crate::{
     mouseclick::MouseClick,
+    resources::TextureHandles,
     types::{Position, UnitType},
 };
 use bevy::prelude::*;
-use std::collections::HashMap;
-
-pub struct SpriteData {
-    file: &'static str,
-    dimensions: Vec2,
-    columns: usize,
-    rows: usize,
-}
-
-fn sprite_data(t: UnitType) -> SpriteData {
-    match t {
-        UnitType::Player => SpriteData {
-            file: "textures/rpg/chars/gabe/gabe-idle-run.png",
-            dimensions: Vec2::new(24., 24.),
-            columns: 7,
-            rows: 1,
-        },
-        UnitType::Kobold => SpriteData {
-            file: "textures/rpg/mobs/kobold-idle.png",
-            dimensions: Vec2::new(24., 24.),
-            columns: 15,
-            rows: 1,
-        },
-    }
-}
-
-#[derive(Clone)]
-pub struct TextureHandles(HashMap<UnitType, Handle<TextureAtlas>>);
-
-impl TextureHandles {
-    pub fn new(
-        asset_server: &AssetServer,
-        texture_atlases: &mut Assets<TextureAtlas>,
-    ) -> TextureHandles {
-        let mut map = HashMap::new();
-        for t in vec![UnitType::Player, UnitType::Kobold] {
-            let sprite_data = sprite_data(t);
-            let texture_handle = asset_server.load(sprite_data.file);
-            let texture_atlas = TextureAtlas::from_grid(
-                texture_handle,
-                sprite_data.dimensions,
-                sprite_data.columns,
-                sprite_data.rows,
-            );
-            let texture_atlas_handle = texture_atlases.add(texture_atlas);
-            map.insert(t, texture_atlas_handle);
-        }
-        TextureHandles(map)
-    }
-}
 
 pub struct UnitPlugin;
 
 impl Plugin for UnitPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system_to_stage(StartupStage::PostStartup, setup_units)
+        app.add_startup_system(setup_units)
             .add_system(spawn_on_click_system.after("mouseclick"))
             .add_system(update_position_system);
     }

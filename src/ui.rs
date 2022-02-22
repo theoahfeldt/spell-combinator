@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::resources::DefaultFont;
+
 /// This example illustrates how to create a button that changes color and text based on its
 /// interaction state.
 
@@ -45,36 +47,76 @@ fn button_system(
     }
 }
 
-fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup(mut commands: Commands, font: Res<DefaultFont>) {
     // ui camera
     commands.spawn_bundle(UiCameraBundle::default());
     commands
-        .spawn_bundle(ButtonBundle {
+        // Root node, covers entire window
+        .spawn_bundle(NodeBundle {
             style: Style {
-                size: Size::new(Val::Px(150.0), Val::Px(65.0)),
-                // center button
-                margin: Rect::all(Val::Auto),
-                // horizontally center child text
-                justify_content: JustifyContent::Center,
-                // vertically center child text
-                align_items: AlignItems::Center,
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                justify_content: JustifyContent::SpaceBetween,
                 ..Default::default()
             },
-            color: NORMAL_BUTTON.into(),
+            color: Color::NONE.into(),
             ..Default::default()
         })
         .with_children(|parent| {
-            parent.spawn_bundle(TextBundle {
-                text: Text::with_section(
-                    "Button",
-                    TextStyle {
-                        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
-                        font_size: 40.0,
-                        color: Color::rgb(0.9, 0.9, 0.9),
+            // Effect Menu
+            parent
+                .spawn_bundle(NodeBundle {
+                    style: Style {
+                        flex_direction: FlexDirection::ColumnReverse,
+                        size: Size::new(Val::Px(200.0), Val::Px(200.0)),
+                        align_self: AlignSelf::FlexEnd,
+                        justify_content: JustifyContent::SpaceBetween,
+                        align_items: AlignItems::Center,
+                        ..Default::default()
                     },
-                    Default::default(),
-                ),
-                ..Default::default()
-            });
+                    ..Default::default()
+                })
+                .with_children(|parent| {
+                    parent.spawn_bundle(TextBundle {
+                        text: Text::with_section(
+                            "Text",
+                            TextStyle {
+                                font: font.0.clone(),
+                                font_size: 40.0,
+                                color: Color::rgb(0.9, 0.9, 0.9),
+                            },
+                            Default::default(),
+                        ),
+                        ..Default::default()
+                    });
+                    parent
+                        .spawn_bundle(ButtonBundle {
+                            style: Style {
+                                size: Size::new(Val::Px(150.0), Val::Px(65.0)),
+                                // center button
+                                margin: Rect::all(Val::Auto),
+                                // horizontally center child text
+                                justify_content: JustifyContent::Center,
+                                // vertically center child text
+                                align_items: AlignItems::Center,
+                                ..Default::default()
+                            },
+                            color: NORMAL_BUTTON.into(),
+                            ..Default::default()
+                        })
+                        .with_children(|parent| {
+                            parent.spawn_bundle(TextBundle {
+                                text: Text::with_section(
+                                    "Button",
+                                    TextStyle {
+                                        font: font.0.clone(),
+                                        font_size: 40.0,
+                                        color: Color::rgb(0.9, 0.9, 0.9),
+                                    },
+                                    Default::default(),
+                                ),
+                                ..Default::default()
+                            });
+                        });
+                });
         });
 }
