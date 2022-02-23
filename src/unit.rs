@@ -1,6 +1,6 @@
 use crate::{
     resources::TextureHandles,
-    types::{Position, UnitType},
+    types::{Health, Position, UnitType},
 };
 use bevy::prelude::*;
 
@@ -19,6 +19,15 @@ pub fn update_position_system(mut query: Query<(&Position, &mut Transform)>) {
     }
 }
 
+#[derive(Bundle)]
+struct UnitBundle {
+    health: Health,
+    position: Position,
+    #[bundle]
+    sprite: SpriteSheetBundle,
+    timer: Timer,
+}
+
 fn spawn_unit(
     commands: &mut Commands,
     texture_handles: &TextureHandles,
@@ -26,8 +35,9 @@ fn spawn_unit(
     pos: Position,
     col: Color,
 ) {
-    commands
-        .spawn_bundle(SpriteSheetBundle {
+    commands.spawn_bundle(UnitBundle {
+        health: Health(10),
+        sprite: SpriteSheetBundle {
             texture_atlas: texture_handles.0.get(&t).unwrap().clone(),
             transform: Transform {
                 translation: pos.0.extend(0.),
@@ -39,9 +49,10 @@ fn spawn_unit(
                 ..Default::default()
             },
             ..Default::default()
-        })
-        .insert(Timer::from_seconds(0.1, true))
-        .insert(pos);
+        },
+        position: pos,
+        timer: Timer::from_seconds(0.1, true),
+    });
 }
 
 fn setup_units(mut commands: Commands, texture_handles: Res<TextureHandles>) {
