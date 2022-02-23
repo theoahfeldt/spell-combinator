@@ -1,15 +1,16 @@
-use crate::types::Position;
+use std::collections::VecDeque;
+
+use crate::types::{Health, Position};
 use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct Move {
-    unit: Entity,
     target: Position,
 }
 
 impl Move {
-    pub fn new(unit: Entity, target: Position) -> Self {
-        Self { unit, target }
+    pub fn new(target: Position) -> Self {
+        Self { target }
     }
 
     pub fn update(&self, position: &mut Position) -> bool {
@@ -39,42 +40,64 @@ impl MovePrep {
     }
 
     pub fn compile(&self) -> Option<Move> {
-        self.unit
-            .and_then(|u| self.target.clone().map(|t| Move::new(u, t)))
+        self.target.clone().map(|t| Move::new(t))
     }
 }
 
-pub fn move_system(
-    mut commands: Commands,
-    moves: Query<(Entity, &Move)>,
-    mut pos: Query<&mut Position>,
-) {
-    for (e, m) in moves.iter() {
-        if m.update(&mut pos.get_mut(m.unit).unwrap()) {
-            commands.entity(e).despawn();
+pub struct Damage {
+    damage: i32,
+}
+
+impl Damage {
+    pub fn new(damage: i32) -> Self {
+        Self { damage }
+    }
+
+    pub fn update(&self, health: &mut Health) -> bool {
+        health.0 -= self.damage;
+        true
+    }
+}
+
+pub enum Effect {
+    Move(Move),
+    Damage(Damage),
+}
+
+impl Effect {
+    pub fn update(&self, health: &mut Health, position: &mut Position) -> bool {
+        match self {
+            Effect::Move(m) => m.update(position),
+            Effect::Damage(d) => d.update(health),
         }
     }
 }
 
-// pub fn add_move_system(
+#[derive(Component)]
+pub struct Effects(pub VecDeque<Effect>);
+
+impl Effects {
+    pub fn new() -> Self {
+        Self(VecDeque::new())
+    }
+}
+
+// pub fn move_system(
 //     mut commands: Commands,
-//     query: Query<Entity, With<Position>>,
-//     mut ev_buttonclick: EventReader<ButtonClick>,
+//     moves: Query<(Entity, &Move)>,
+//     mut pos: Query<&mut Position>,
 // ) {
-//     for _click in ev_buttonclick.iter() {
-//         for e in query.iter() {
-//             commands.spawn().insert(Move {
-//                 unit: e,
-//                 target: Position { x: 0.0, y: 0.0 },
-//             });
+//     for (e, m) in moves.iter() {
+//         if m.update(&mut pos.get_mut(m.unit).unwrap()) {
+//             commands.entity(e).despawn();
 //         }
 //     }
 // }
 
-pub struct MovePlugin;
+// pub struct MovePlugin;
 
-impl Plugin for MovePlugin {
-    fn build(&self, app: &mut App) {
-        app.add_system(move_system);
-    }
-}
+// impl Plugin for MovePlugin {
+//     fn build(&self, app: &mut App) {
+//         app.add_system(move_system);
+//     }
+// }

@@ -1,4 +1,5 @@
 use crate::{
+    effect::Effects,
     resources::TextureHandles,
     types::{Health, Position, UnitType},
 };
@@ -9,6 +10,7 @@ pub struct UnitPlugin;
 impl Plugin for UnitPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup_units)
+            .add_system(update_effect_system)
             .add_system(update_position_system);
     }
 }
@@ -19,10 +21,21 @@ pub fn update_position_system(mut query: Query<(&Position, &mut Transform)>) {
     }
 }
 
+pub fn update_effect_system(mut query: Query<(&mut Health, &mut Position, &mut Effects)>) {
+    for (mut health, mut pos, mut effects) in query.iter_mut() {
+        if let Some(effect) = effects.0.get(0) {
+            if effect.update(&mut health, &mut pos) {
+                effects.0.pop_front();
+            }
+        }
+    }
+}
+
 #[derive(Bundle)]
 struct UnitBundle {
     health: Health,
     position: Position,
+    effects: Effects,
     #[bundle]
     sprite: SpriteSheetBundle,
     timer: Timer,
@@ -37,6 +50,7 @@ fn spawn_unit(
 ) {
     commands.spawn_bundle(UnitBundle {
         health: Health(10),
+        effects: Effects::new(),
         sprite: SpriteSheetBundle {
             texture_atlas: texture_handles.0.get(&t).unwrap().clone(),
             transform: Transform {

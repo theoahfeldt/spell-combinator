@@ -1,6 +1,11 @@
 use bevy::prelude::*;
 
-use crate::{effect::MovePrep, mouseclick::MouseClick, resources::DefaultFont, types::Position};
+use crate::{
+    effect::{Effect, Effects, MovePrep},
+    mouseclick::MouseClick,
+    resources::DefaultFont,
+    types::Position,
+};
 
 /// This example illustrates how to create a button that changes color and text based on its
 /// interaction state.
@@ -56,18 +61,24 @@ fn update_move_menu_system(
 }
 
 fn move_button_system(
-    mut commands: Commands,
     mut interaction_query: Query<
         (&Interaction, &mut UiColor, &MovePrep),
         (Changed<Interaction>, With<Button>),
     >,
+    mut effects_query: Query<&mut Effects>,
 ) {
     for (interaction, mut color, prep) in interaction_query.iter_mut() {
         match *interaction {
             Interaction::Clicked => {
                 *color = PRESSED_BUTTON.into();
                 if let Some(m) = prep.compile() {
-                    commands.spawn().insert(m);
+                    if let Some(e) = prep.unit {
+                        effects_query
+                            .get_mut(e)
+                            .unwrap()
+                            .0
+                            .push_back(Effect::Move(m))
+                    }
                 }
             }
             Interaction::Hovered => {
