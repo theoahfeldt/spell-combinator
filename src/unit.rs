@@ -31,6 +31,15 @@ pub fn update_effect_system(mut query: Query<(&mut Health, &mut Position, &mut E
     }
 }
 
+pub struct Unit {
+    pub entity: Entity,
+    pub health: Health,
+    pub position: Position,
+}
+
+#[derive(Component)]
+pub struct Player;
+
 #[derive(Bundle)]
 struct UnitBundle {
     health: Health,
@@ -48,7 +57,7 @@ fn spawn_unit(
     pos: Position,
     col: Color,
 ) {
-    commands.spawn_bundle(UnitBundle {
+    let builder = &mut commands.spawn_bundle(UnitBundle {
         health: Health(10),
         effects: Effects::new(),
         sprite: SpriteSheetBundle {
@@ -67,6 +76,9 @@ fn spawn_unit(
         position: pos,
         timer: Timer::from_seconds(0.1, true),
     });
+    if t == UnitType::Player {
+        builder.insert(Player);
+    }
 }
 
 fn setup_units(mut commands: Commands, texture_handles: Res<TextureHandles>) {
