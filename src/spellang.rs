@@ -220,7 +220,7 @@ fn update_spell_circuit_system(
         entity: x.0,
         health: x.1.clone(),
         position: x.2.clone(),
-    })(player_query.iter().next().unwrap());
+    })(player_query.single());
     let enemies = enemy_query
         .iter()
         .map(|(entity, health, position, _)| Unit {

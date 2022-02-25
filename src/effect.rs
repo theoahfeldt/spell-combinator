@@ -81,23 +81,3 @@ impl Effects {
         Self(VecDeque::new())
     }
 }
-
-// pub fn move_system(
-//     mut commands: Commands,
-//     moves: Query<(Entity, &Move)>,
-//     mut pos: Query<&mut Position>,
-// ) {
-//     for (e, m) in moves.iter() {
-//         if m.update(&mut pos.get_mut(m.unit).unwrap()) {
-//             commands.entity(e).despawn();
-//         }
-//     }
-// }
-
-// pub struct MovePlugin;
-
-// impl Plugin for MovePlugin {
-//     fn build(&self, app: &mut App) {
-//         app.add_system(move_system);
-//     }
-// }

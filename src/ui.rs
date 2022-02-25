@@ -52,7 +52,7 @@ fn update_move_menu_system(
     mut query: Query<(&Name, &mut Text)>,
     button_query: Query<&MovePrep, With<Button>>,
 ) {
-    let prep = button_query.iter().next().unwrap();
+    let prep = button_query.single();
     for (name, ref mut text) in query.iter_mut() {
         if *name == Name::new("MoveText") {
             text.sections[0].value = format!("Unit: {:?}\n Target: {:?}", prep.unit, prep.target);

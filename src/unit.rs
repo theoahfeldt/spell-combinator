@@ -101,19 +101,3 @@ fn setup_units(mut commands: Commands, texture_handles: Res<TextureHandles>) {
         spawn_unit(&mut commands, &texture_handles, UnitType::Kobold, pos, col)
     })
 }
-
-// fn spawn_on_click_system(
-//     mut commands: Commands,
-//     texture_handles: Res<TextureHandles>,
-//     mut ev_mouseclick: EventReader<MouseClick>,
-// ) {
-//     for click in ev_mouseclick.iter() {
-//         spawn_unit(
-//             &mut commands,
-//             &texture_handles,
-//             UnitType::Kobold,
-//             Position(click.0),
-//             Color::WHITE,
-//         )
-//     }
-// }
