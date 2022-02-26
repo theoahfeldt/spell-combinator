@@ -4,6 +4,7 @@ use crate::{
     effect::{Effect, Effects, MovePrep},
     mouseclick::MouseClick,
     resources::DefaultFont,
+    spellbuilder::SpellBuilderUI,
     types::Position,
 };
 
@@ -23,7 +24,8 @@ impl Plugin for UiPlugin {
         app.add_startup_system(setup)
             .add_system(move_button_system)
             .add_system(select_target_system)
-            .add_system(update_move_menu_system);
+            .add_system(update_move_menu_system)
+            .add_system(toggle_ui_system);
     }
 }
 
@@ -34,30 +36,31 @@ fn select_target_system(
 ) {
     let prep: &mut MovePrep = &mut button_query.iter_mut().next().unwrap();
     for click in ev_mouseclick.iter() {
+        let click_pos = click.world_position.clone();
         let mut unit = None;
         for (e, pos) in query.iter() {
-            if pos.0.distance(click.0) < 5. {
+            if pos.0.distance(click_pos.0) < 5. {
                 unit = Some(e);
             }
         }
         if let Some(_) = unit {
             prep.unit = unit;
         } else {
-            prep.target = Some(Position(click.0));
+            prep.target = Some(click_pos);
         }
     }
 }
 
+#[derive(Component)]
+struct MoveText;
+
 fn update_move_menu_system(
-    mut query: Query<(&Name, &mut Text)>,
+    mut query: Query<&mut Text, With<MoveText>>,
     button_query: Query<&MovePrep, With<Button>>,
 ) {
     let prep = button_query.single();
-    for (name, ref mut text) in query.iter_mut() {
-        if *name == Name::new("MoveText") {
-            text.sections[0].value = format!("Unit: {:?}\n Target: {:?}", prep.unit, prep.target);
-        }
-    }
+    query.single_mut().sections[0].value =
+        format!("Unit: {:?}\n Target: {:?}", prep.unit, prep.target);
 }
 
 fn move_button_system(
@@ -91,6 +94,44 @@ fn move_button_system(
     }
 }
 
+#[derive(Component)]
+struct MoveUI;
+
+enum UI {
+    Move,
+    SpellBuilder,
+}
+
+impl Default for UI {
+    fn default() -> Self {
+        UI::Move
+    }
+}
+
+fn toggle_ui_system(
+    mut current_ui: Local<UI>,
+    keys: Res<Input<KeyCode>>,
+    mut move_query: Query<&mut Style, (With<MoveUI>, Without<SpellBuilderUI>)>,
+    mut builder_query: Query<&mut Style, (With<SpellBuilderUI>, Without<MoveUI>)>,
+) {
+    if keys.just_released(KeyCode::M) {
+        let move_style = &mut move_query.single_mut();
+        let builder_style = &mut builder_query.single_mut();
+        match *current_ui {
+            UI::Move => {
+                *current_ui = UI::SpellBuilder;
+                move_style.display = Display::None;
+                builder_style.display = Display::Flex;
+            }
+            UI::SpellBuilder => {
+                *current_ui = UI::Move;
+                move_style.display = Display::Flex;
+                builder_style.display = Display::None;
+            }
+        }
+    }
+}
+
 fn setup(mut commands: Commands, font: Res<DefaultFont>) {
     // ui camera
     commands.spawn_bundle(UiCameraBundle::default());
@@ -99,12 +140,12 @@ fn setup(mut commands: Commands, font: Res<DefaultFont>) {
         .spawn_bundle(NodeBundle {
             style: Style {
                 size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
-                justify_content: JustifyContent::SpaceBetween,
                 ..Default::default()
             },
             color: Color::NONE.into(),
             ..Default::default()
         })
+        .insert(MoveUI)
         .with_children(|parent| {
             // Move Menu
             parent
@@ -134,7 +175,7 @@ fn setup(mut commands: Commands, font: Res<DefaultFont>) {
                             ),
                             ..Default::default()
                         })
-                        .insert(Name::new("MoveText"));
+                        .insert(MoveText);
                     parent
                         .spawn_bundle(ButtonBundle {
                             style: Style {

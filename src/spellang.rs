@@ -148,7 +148,7 @@ fn player(s: &State, _inputs: Vec<Value>) -> (Vec<Value>, Vec<(Entity, Effect)>)
     (vec![Value::Target(s.player.entity)], vec![])
 }
 
-fn punch(_s: &State, target: Vec<Value>) -> (Vec<Value>, Vec<(Entity, Effect)>) {
+fn _punch(_s: &State, target: Vec<Value>) -> (Vec<Value>, Vec<(Entity, Effect)>) {
     if let Value::Target(entity) = target[0] {
         (
             vec![Value::Empty],

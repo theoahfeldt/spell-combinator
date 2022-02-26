@@ -1,10 +1,15 @@
 use bevy::prelude::*;
 
+use crate::types::Position;
+
 #[derive(Component)]
 pub struct MainCamera;
 
 #[derive(Debug)]
-pub struct MouseClick(pub Vec2);
+pub struct MouseClick {
+    pub window_position: Vec2,
+    pub world_position: Position,
+}
 
 pub fn mouse_button_debug_system(mut ev_mouseclick: EventReader<MouseClick>) {
     for click in ev_mouseclick.iter() {
@@ -22,7 +27,10 @@ pub fn mouse_button_system(
     if mouse_button_input.just_released(MouseButton::Left) {
         if let Some(pos) = win.cursor_position() {
             let world_coords = compute_world_coords(pos, win, q_camera.single());
-            ev_mouseclick.send(MouseClick(world_coords));
+            ev_mouseclick.send(MouseClick {
+                window_position: pos,
+                world_position: Position(world_coords),
+            });
         }
     }
 }
