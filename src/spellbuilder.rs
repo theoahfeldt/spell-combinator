@@ -18,7 +18,6 @@ impl SpellCard {
         let child = commands
             .spawn_bundle(NodeBundle {
                 style: Style {
-                    position_type: PositionType::Absolute,
                     position: Rect {
                         left: Val::Px(position.x),
                         bottom: Val::Px(position.y),
