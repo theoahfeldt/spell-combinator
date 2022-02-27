@@ -1,13 +1,10 @@
 [package]
 name = "spell-combinator"
 version = "0.1.0"
-authors = ["Anders Thuné <asse.97@gmail.com>"]
-edition = "2018"
+authors = ["Anders Ågren Thuné", "Theo Puranen Åhfeldt"]
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bevy = { version = "0.6.1", features = ["dynamic"] }
-
-[workspace]
-resolver = "2"
