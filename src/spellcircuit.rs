@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     effect::{Effect, Effects},
     spell::{Spell, State, Unit, Value},
@@ -110,20 +112,27 @@ fn update_spell_circuit_system(
     mut player_query: Query<(Entity, &Health, &Position, &mut Effects), With<Player>>,
 ) {
     let circuit = &mut circuit_query.iter_mut().next().unwrap().0;
-    let player = (|x: (Entity, &Health, &Position, &Effects)| Unit {
-        entity: x.0,
-        health: x.1.clone(),
-        position: x.2.clone(),
-    })(player_query.single());
-    let enemies = enemy_query
+    let mut units: HashMap<Entity, Unit> = enemy_query
         .iter()
-        .map(|(entity, health, position, _)| Unit {
-            entity,
-            health: health.clone(),
-            position: position.clone(),
+        .map(|(entity, health, pos, _)| {
+            (
+                entity,
+                Unit {
+                    health: health.0,
+                    position: pos.0,
+                },
+            )
         })
         .collect();
-    if let Some(new_effects) = circuit.execute_next_spell(&State { player, enemies }) {
+    let (player, health, pos, _) = player_query.single();
+    units.insert(
+        player,
+        Unit {
+            health: health.0,
+            position: pos.0,
+        },
+    );
+    if let Some(new_effects) = circuit.execute_next_spell(&State { player, units }) {
         for (entity, effect) in new_effects.into_iter() {
             let entry = &mut enemy_query
                 .get_mut(entity)
