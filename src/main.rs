@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use spell_combinator::mouseclick::{self, MainCamera, MouseClick};
 use spell_combinator::resources::ResourcePlugin;
-use spell_combinator::spellang::CircuitPlugin;
 use spell_combinator::spellbuilder::SpellBuilderPlugin;
+use spell_combinator::spellcircuit::CircuitPlugin;
 use spell_combinator::ui::{ButtonClick, UiPlugin};
 use spell_combinator::unit::UnitPlugin;
 
