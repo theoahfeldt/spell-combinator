@@ -1,9 +1,15 @@
 use crate::{
-    effect::{Damage, Effect, Effects, Move},
+    effect::{Damage, Effect, Effects},
     types::{Health, Position},
-    unit::{Player, Unit},
+    unit::Player,
 };
 use bevy::prelude::*;
+
+pub struct Unit {
+    pub entity: Entity,
+    pub health: Health,
+    pub position: Position,
+}
 
 pub struct State {
     pub player: Unit,
@@ -148,7 +154,7 @@ fn player(s: &State, _inputs: Vec<Value>) -> (Vec<Value>, Vec<(Entity, Effect)>)
     (vec![Value::Target(s.player.entity)], vec![])
 }
 
-fn _punch(_s: &State, target: Vec<Value>) -> (Vec<Value>, Vec<(Entity, Effect)>) {
+fn punch(_s: &State, target: Vec<Value>) -> (Vec<Value>, Vec<(Entity, Effect)>) {
     if let Value::Target(entity) = target[0] {
         (
             vec![Value::Empty],
@@ -159,23 +165,9 @@ fn _punch(_s: &State, target: Vec<Value>) -> (Vec<Value>, Vec<(Entity, Effect)>)
     }
 }
 
-fn move_to_42(_s: &State, target: Vec<Value>) -> (Vec<Value>, Vec<(Entity, Effect)>) {
-    if let Value::Target(entity) = target[0] {
-        (
-            vec![Value::Empty],
-            vec![(
-                entity,
-                Effect::Move(Move::new(Position(Vec2::new(42., 42.)))),
-            )],
-        )
-    } else {
-        panic!("Bad input to punch {:?}", target);
-    }
-}
-
 pub fn example_circuit() -> SpellCircuit {
     let player = Spell::new(0, 1, player);
-    let punch = Spell::new(1, 1, move_to_42);
+    let punch = Spell::new(1, 1, punch);
     let spells = vec![player, punch];
     let player_node = Node {
         inputs: vec![],
