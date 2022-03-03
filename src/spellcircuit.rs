@@ -107,12 +107,12 @@ fn setup_spell_circuit(mut commands: Commands) {
 }
 
 fn update_spell_circuit_system(
-    mut circuit_query: Query<&mut ExampleCircuit>,
-    mut enemy_query: Query<(Entity, &Health, &Position, &mut Effects), Without<Player>>,
-    mut player_query: Query<(Entity, &Health, &Position, &mut Effects), With<Player>>,
+    mut q_circuit: Query<&mut ExampleCircuit>,
+    mut q_units: Query<(Entity, &Health, &Position, &mut Effects)>,
+    q_player: Query<Entity, With<Player>>,
 ) {
-    let circuit = &mut circuit_query.iter_mut().next().unwrap().0;
-    let mut units: HashMap<Entity, Unit> = enemy_query
+    let circuit = &mut q_circuit.iter_mut().next().unwrap().0;
+    let units: HashMap<Entity, Unit> = q_units
         .iter()
         .map(|(entity, health, pos, _)| {
             (
@@ -124,20 +124,10 @@ fn update_spell_circuit_system(
             )
         })
         .collect();
-    let (player, health, pos, _) = player_query.single();
-    units.insert(
-        player,
-        Unit {
-            health: health.0,
-            position: pos.0,
-        },
-    );
+    let player = q_player.single();
     if let Some(new_effects) = circuit.execute_next_spell(&State { player, units }) {
         for (entity, effect) in new_effects.into_iter() {
-            let entry = &mut enemy_query
-                .get_mut(entity)
-                .or(player_query.get_mut(entity))
-                .unwrap();
+            let entry = &mut q_units.get_mut(entity).unwrap();
             entry.3 .0.push_back(effect);
         }
     }
