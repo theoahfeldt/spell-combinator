@@ -1,4 +1,5 @@
 pub mod effect;
+pub mod global_effect;
 pub mod mouseclick;
 pub mod resources;
 pub mod spell;

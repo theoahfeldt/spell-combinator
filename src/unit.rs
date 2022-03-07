@@ -67,6 +67,13 @@ fn health_text(health: i32, font: Handle<Font>) -> Text {
 #[derive(Component)]
 pub struct Player;
 
+#[derive(Clone)]
+pub struct Unit {
+    pub health: Health,
+    pub position: Position,
+    pub unit_type: UnitType,
+}
+
 #[derive(Bundle)]
 struct UnitBundle {
     health: Health,
@@ -77,46 +84,39 @@ struct UnitBundle {
     timer: Timer,
 }
 
-fn spawn_unit(
+pub fn spawn_unit(
     commands: &mut Commands,
     texture_handles: &TextureHandles,
-    t: UnitType,
-    pos: Position,
-    col: Color,
-    health: i32,
     font: Handle<Font>,
+    unit: Unit,
 ) {
     let entity = commands
         .spawn_bundle(UnitBundle {
-            health: Health(health),
+            health: unit.health.clone(),
             effects: Effects::new(),
             sprite: SpriteSheetBundle {
-                texture_atlas: texture_handles.0.get(&t).unwrap().clone(),
+                texture_atlas: texture_handles.0.get(&unit.unit_type).unwrap().clone(),
                 transform: Transform {
-                    translation: pos.0.extend(0.),
+                    translation: unit.position.0.extend(0.),
                     scale: Vec3::splat(2.),
-                    ..Default::default()
-                },
-                sprite: TextureAtlasSprite {
-                    color: col,
                     ..Default::default()
                 },
                 ..Default::default()
             },
-            position: pos,
+            position: unit.position,
             timer: Timer::from_seconds(0.1, true),
         })
         .with_children(|parent| {
             parent
                 .spawn_bundle(Text2dBundle {
-                    text: health_text(health, font),
+                    text: health_text(unit.health.0, font),
                     transform: Transform::from_translation(Vec3::new(0., -20., 0.)),
                     ..Default::default()
                 })
                 .insert(HealthText);
         })
         .id();
-    if t == UnitType::Player {
+    if unit.unit_type == UnitType::Player {
         commands.entity(entity).insert(Player);
     }
 }
@@ -127,31 +127,33 @@ fn setup_units(
     font: Res<DefaultFont>,
 ) {
     let enemy_positions = vec![
-        (Position(Vec2::new(-200., 160.)), Color::WHITE),
-        (Position(Vec2::new(0., 120.)), Color::YELLOW),
-        (Position(Vec2::new(220., 20.)), Color::CYAN),
-        (Position(Vec2::new(-70., -180.)), Color::ORANGE),
-        (Position(Vec2::new(-145., 280.)), Color::GREEN),
+        Position(Vec2::new(-200., 160.)),
+        Position(Vec2::new(0., 120.)),
+        Position(Vec2::new(220., 20.)),
+        Position(Vec2::new(-70., -180.)),
+        Position(Vec2::new(-145., 280.)),
     ];
 
     spawn_unit(
         &mut commands,
         &texture_handles,
-        UnitType::Player,
-        Position(Vec2::ZERO),
-        Color::WHITE,
-        30,
         font.0.clone(),
+        Unit {
+            health: Health(30),
+            position: Position(Vec2::ZERO),
+            unit_type: UnitType::Player,
+        },
     );
-    enemy_positions.into_iter().for_each(|(pos, col)| {
+    enemy_positions.into_iter().for_each(|pos| {
         spawn_unit(
             &mut commands,
             &texture_handles,
-            UnitType::Kobold,
-            pos,
-            col,
-            10,
             font.0.clone(),
+            Unit {
+                health: Health(10),
+                position: pos,
+                unit_type: UnitType::Kobold,
+            },
         )
     })
 }

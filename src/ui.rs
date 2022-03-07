@@ -15,13 +15,14 @@ const NORMAL_BUTTON: Color = Color::rgb(0.15, 0.15, 0.15);
 const HOVERED_BUTTON: Color = Color::rgb(0.25, 0.25, 0.25);
 const PRESSED_BUTTON: Color = Color::rgb(0.35, 0.75, 0.35);
 
-pub struct ButtonClick;
+struct ButtonClick;
 
 pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup)
+        app.add_event::<ButtonClick>()
+            .add_startup_system(setup)
             .add_system(move_button_system)
             .add_system(select_target_system)
             .add_system(update_move_menu_system)
