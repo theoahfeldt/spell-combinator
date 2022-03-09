@@ -1,6 +1,9 @@
+use crate::{
+    resources::DefaultFont,
+    spell::Spell,
+    spellcircuit::{CircuitNode, Output, SpellCircuit},
+};
 use bevy::prelude::*;
-
-use crate::resources::DefaultFont;
 
 struct SpellCard {
     position: Vec2,
@@ -140,4 +143,99 @@ fn setup(mut commands: Commands, font: Res<DefaultFont>) {
         description: "This spell is epic.".to_string(),
     };
     card.spawn(commands, font.0.clone(), root);
+}
+
+struct BuilderNode {
+    inputs: Vec<Option<Output>>,
+    spell: Spell,
+}
+
+pub struct CircuitBuilder {
+    nodes: Vec<BuilderNode>,
+    output: Option<Output>,
+}
+
+impl CircuitBuilder {
+    pub fn from_spells(spells: Vec<Spell>) -> Self {
+        let nodes = spells
+            .into_iter()
+            .map(|spell| {
+                let inputs = vec![None; spell.num_inputs];
+                BuilderNode { inputs, spell }
+            })
+            .collect::<Vec<BuilderNode>>();
+        Self {
+            nodes,
+            output: None,
+        }
+    }
+
+    fn check_input(&self, input: &Output) {
+        if input.node >= self.nodes.len() {
+            panic!(
+                "Invalid input: {:?}. Circuit only has {:?} nodes.",
+                input,
+                self.nodes.len()
+            )
+        } else {
+            let node = &self.nodes[input.node];
+            if input.index >= node.spell.num_inputs {
+                panic!(
+                    "Invalid output: {:?}. Node only has {:?} inputs.",
+                    input, node.spell.num_inputs
+                )
+            }
+        }
+    }
+
+    fn check_output(&self, output: &Output) {
+        if output.node >= self.nodes.len() {
+            panic!(
+                "Invalid output: {:?}. Circuit only has {:?} nodes.",
+                output,
+                self.nodes.len()
+            )
+        } else {
+            let node = &self.nodes[output.node];
+            if output.index >= node.spell.num_outputs {
+                panic!(
+                    "Invalid output: {:?}. Node only has {:?} outputs.",
+                    output, node.spell.num_outputs
+                )
+            }
+        }
+    }
+
+    pub fn set_output(&mut self, output: Output) {
+        self.check_output(&output);
+        self.output = Some(output);
+    }
+
+    pub fn connect_io(&mut self, input: Output, output: Output) {
+        self.check_input(&input);
+        self.check_output(&output);
+        let node = &mut self.nodes[input.node];
+        node.inputs[input.index] = Some(output);
+        // TODO: Check types and that no cycle is formed. Return bool based on this check.
+    }
+
+    fn convert_node(node: &BuilderNode) -> Option<CircuitNode> {
+        let inputs = node
+            .inputs
+            .clone()
+            .into_iter()
+            .collect::<Option<Vec<Output>>>();
+        inputs.map(|inputs| CircuitNode::new(inputs, node.spell.clone()))
+    }
+
+    pub fn compile(&self) -> Option<SpellCircuit> {
+        self.output.clone().and_then(|output| {
+            let mut res: Option<Vec<CircuitNode>> = Some(vec![]);
+            self.nodes.iter().for_each(|node| {
+                res.as_mut()
+                    .map(|res| CircuitBuilder::convert_node(node).map(|node| res.push(node)));
+            });
+            res.map(|nodes| SpellCircuit::new(nodes, output))
+        })
+    }
 }
