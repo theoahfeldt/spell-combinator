@@ -9,7 +9,7 @@ struct SpellCard {
 }
 
 impl SpellCard {
-    fn spawn(self, mut commands: Commands, font: Res<DefaultFont>, root: Entity) {
+    fn spawn(self, mut commands: Commands, font: Handle<Font>, root: Entity) {
         let Self {
             position,
             name,
@@ -39,7 +39,7 @@ impl SpellCard {
                     text: Text::with_section(
                         name,
                         TextStyle {
-                            font: font.0.clone(),
+                            font: font.clone(),
                             font_size: 20.,
                             color: Color::rgb(0., 0., 0.),
                         },
@@ -52,7 +52,7 @@ impl SpellCard {
                     text: Text::with_section(
                         description,
                         TextStyle {
-                            font: font.0.clone(),
+                            font: font.clone(),
                             font_size: 16.,
                             color: Color::rgb(0., 0., 0.),
                         },
@@ -139,5 +139,5 @@ fn setup(mut commands: Commands, font: Res<DefaultFont>) {
         name: "Epic Spell".to_string(),
         description: "This spell is epic.".to_string(),
     };
-    card.spawn(commands, font, root);
+    card.spawn(commands, font.0.clone(), root);
 }

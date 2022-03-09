@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     effect::{Effect, Effects},
     global_effect::{GlobalEffect, SelectRubble, SpawnUnit},
@@ -8,6 +6,7 @@ use crate::{
     unit::Player,
 };
 use bevy::prelude::*;
+use std::collections::HashMap;
 
 // Pointer to a specific output of a specific node in a spellcircuit
 #[derive(Clone, Debug)]
@@ -23,13 +22,13 @@ impl Output {
 }
 
 #[derive(Clone)]
-pub struct Node {
+pub struct CircuitNode {
     inputs: Vec<Output>,
     pub outputs: Option<Vec<Value>>,
     spell: Spell,
 }
 
-impl Node {
+impl CircuitNode {
     pub fn new(inputs: Vec<Output>, spell: Spell) -> Self {
         Self {
             inputs,
@@ -40,11 +39,15 @@ impl Node {
 }
 
 pub struct SpellCircuit {
-    pub nodes: Vec<Node>,
+    pub nodes: Vec<CircuitNode>,
     output: Output,
 }
 
 impl SpellCircuit {
+    pub fn new(nodes: Vec<CircuitNode>, output: Output) -> Self {
+        Self { nodes, output }
+    }
+
     pub fn execute_next_spell(
         &mut self,
         s: &SpellState,
@@ -86,8 +89,8 @@ impl SpellCircuit {
 }
 
 pub fn example_circuit() -> SpellCircuit {
-    let scout = Node::new(vec![], Spell::scout());
-    let spawn = Node::new(vec![Output::new(0, 0)], Spell::spawn_cobold());
+    let scout = CircuitNode::new(vec![], Spell::scout());
+    let spawn = CircuitNode::new(vec![Output::new(0, 0)], Spell::spawn_cobold());
     let nodes = vec![scout, spawn];
     let output = Output::new(1, 0);
     SpellCircuit { nodes, output }
