@@ -32,7 +32,7 @@ impl Plugin for UiPlugin {
 
 fn select_target_system(
     mut ev_mouseclick: EventReader<MouseClick>,
-    query: Query<(Entity, &Position)>,
+    query: Query<(Entity, &Position), With<Effects>>,
     mut button_query: Query<&mut MovePrep, With<Button>>,
 ) {
     let prep: &mut MovePrep = &mut button_query.iter_mut().next().unwrap();
