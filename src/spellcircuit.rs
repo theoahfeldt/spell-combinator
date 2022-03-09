@@ -26,15 +26,15 @@ impl Output {
 pub struct Node {
     inputs: Vec<Output>,
     pub outputs: Option<Vec<Value>>,
-    spell_idx: usize,
+    spell: Spell,
 }
 
 impl Node {
-    pub fn new(inputs: Vec<Output>, spell_idx: usize) -> Self {
+    pub fn new(inputs: Vec<Output>, spell: Spell) -> Self {
         Self {
             inputs,
             outputs: None,
-            spell_idx,
+            spell,
         }
     }
 }
@@ -42,7 +42,6 @@ impl Node {
 pub struct SpellCircuit {
     pub nodes: Vec<Node>,
     output: Output,
-    spells: Vec<Spell>,
 }
 
 impl SpellCircuit {
@@ -78,8 +77,7 @@ impl SpellCircuit {
                         output: output.clone(),
                         ..s.clone()
                     };
-                    let res =
-                        (self.spells[self.nodes[output.node].spell_idx].function)(state, inputs);
+                    let res = (self.nodes[output.node].spell.function)(state, inputs);
                     self.nodes[output.node].outputs = Some(res.0.clone());
                     Some((res.1, res.2))
                 })
@@ -88,16 +86,11 @@ impl SpellCircuit {
 }
 
 pub fn example_circuit() -> SpellCircuit {
-    let spells = vec![Spell::scout(), Spell::spawn_cobold()];
-    let scout_node = Node::new(vec![], 0);
-    let spawn_node = Node::new(vec![Output::new(0, 0)], 1);
-    let nodes = vec![scout_node, spawn_node];
+    let scout = Node::new(vec![], Spell::scout());
+    let spawn = Node::new(vec![Output::new(0, 0)], Spell::spawn_cobold());
+    let nodes = vec![scout, spawn];
     let output = Output::new(1, 0);
-    SpellCircuit {
-        nodes,
-        output,
-        spells,
-    }
+    SpellCircuit { nodes, output }
 }
 
 #[derive(Component)]

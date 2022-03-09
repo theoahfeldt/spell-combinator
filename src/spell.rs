@@ -30,6 +30,7 @@ pub struct SpellState {
 
 type SpellResult = (Vec<Value>, Vec<(Entity, Effect)>, Vec<GlobalEffect>);
 
+#[derive(Clone)]
 pub struct Spell {
     pub num_inputs: usize,
     pub num_outputs: usize,
