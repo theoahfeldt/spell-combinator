@@ -2,7 +2,7 @@ use crate::{
     mouseclick::MouseClick,
     resources::{DefaultFont, TextureHandles},
     spell::Value,
-    spellcircuit::{ExampleCircuit, Output},
+    spellcircuit::{Output, SpellCircuit},
     unit::{self, Unit},
 };
 use bevy::prelude::*;
@@ -46,12 +46,12 @@ pub enum GlobalEffect {
 fn execute_select_rubble(
     mut commands: Commands,
     mut ev_mouseclick: EventReader<MouseClick>,
-    mut q_circuit: Query<&mut ExampleCircuit>,
+    mut q_circuit: Query<&mut SpellCircuit>,
     q_select: Query<(Entity, &SelectRubble)>,
 ) {
     if let Some((select_id, select)) = q_select.iter().next() {
         if let Some(click) = ev_mouseclick.iter().next() {
-            let circuit = &mut q_circuit.single_mut().0;
+            let circuit = &mut q_circuit.single_mut();
             let rubble = commands.spawn().insert(click.world_position.clone()).id();
             if let Some(ref mut outputs) = circuit.nodes[select.output.node].outputs {
                 outputs[select.output.index] = Value::Target(rubble);

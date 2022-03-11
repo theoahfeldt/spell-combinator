@@ -1,5 +1,6 @@
 use crate::types::UnitType;
 use bevy::prelude::*;
+use rand::prelude::*;
 use std::collections::HashMap;
 
 pub struct SpriteData {
@@ -76,6 +77,7 @@ fn setup(
     let texture_handles = TextureHandles::new(&asset_server, &mut texture_atlases);
     commands.insert_resource(texture_handles);
     commands.insert_resource(DefaultFont::new(&asset_server));
+    commands.insert_resource(StdRng::from_entropy());
 }
 
 fn animate_sprite_system(

@@ -36,8 +36,13 @@ impl CircuitNode {
             spell,
         }
     }
+
+    pub fn is_computed(&self) -> bool {
+        self.outputs.is_some()
+    }
 }
 
+#[derive(Component)]
 pub struct SpellCircuit {
     pub nodes: Vec<CircuitNode>,
     output: Output,
@@ -46,6 +51,10 @@ pub struct SpellCircuit {
 impl SpellCircuit {
     pub fn new(nodes: Vec<CircuitNode>, output: Output) -> Self {
         Self { nodes, output }
+    }
+
+    pub fn is_complete(&self) -> bool {
+        self.nodes[self.output.node].is_computed()
     }
 
     pub fn execute_next_spell(
@@ -96,12 +105,12 @@ pub fn example_circuit() -> SpellCircuit {
     SpellCircuit { nodes, output }
 }
 
-#[derive(Component)]
-pub struct ExampleCircuit(pub SpellCircuit);
-
 pub struct CircuitPlugin;
 
 struct EffectsDone(bool);
+
+#[derive(Component)]
+pub struct Active;
 
 impl Plugin for CircuitPlugin {
     fn build(&self, app: &mut App) {
@@ -113,7 +122,7 @@ impl Plugin for CircuitPlugin {
 
 fn setup(mut commands: Commands) {
     commands.insert_resource(EffectsDone(true));
-    commands.spawn().insert(ExampleCircuit(example_circuit()));
+    commands.spawn().insert(example_circuit()).insert(Active);
 }
 
 fn wait_for_effects(
@@ -131,53 +140,56 @@ fn wait_for_effects(
 fn execute_spell_circuit_system(
     mut commands: Commands,
     effects: ResMut<EffectsDone>,
-    mut q_circuit: Query<&mut ExampleCircuit>,
+    mut q_circuit: Query<(Entity, &mut SpellCircuit), With<Active>>,
     mut q_units: Query<(Entity, &Health, &Position, &mut Effects)>,
     q_rubble: Query<(Entity, &Position), Without<Health>>,
     q_player: Query<Entity, With<Player>>,
 ) {
     if effects.0 {
-        let circuit = &mut q_circuit.single_mut().0;
-        let mut units: HashMap<Entity, UnitInfo> = q_units
-            .iter()
-            .map(|(entity, health, pos, _)| {
-                (
+        if let Ok((circuit_id, ref mut circuit)) = q_circuit.get_single_mut() {
+            let mut units: HashMap<Entity, UnitInfo> = q_units
+                .iter()
+                .map(|(entity, health, pos, _)| {
+                    (
+                        entity,
+                        UnitInfo {
+                            health: Some(health.0),
+                            position: pos.0,
+                        },
+                    )
+                })
+                .collect();
+            for (entity, pos) in q_rubble.iter() {
+                units.insert(
                     entity,
                     UnitInfo {
-                        health: Some(health.0),
+                        health: None,
                         position: pos.0,
                     },
-                )
-            })
-            .collect();
-        for (entity, pos) in q_rubble.iter() {
-            units.insert(
-                entity,
-                UnitInfo {
-                    health: None,
-                    position: pos.0,
-                },
-            );
-        }
-        let player = q_player.single();
-        if let Some((new_effects, new_globals)) = circuit.execute_next_spell(&SpellState {
-            output: Output::new(0, 0),
-            player,
-            units,
-        }) {
-            for (entity, effect) in new_effects.into_iter() {
-                let entry = &mut q_units.get_mut(entity).unwrap();
-                entry.3 .0.push_back(effect);
+                );
             }
-            for effect in new_globals.into_iter() {
-                match effect {
-                    GlobalEffect::Select(select) => {
-                        commands.spawn().insert(select);
-                    }
-                    GlobalEffect::Spawn(spawn) => {
-                        commands.spawn().insert(spawn);
+            let player = q_player.single();
+            if let Some((new_effects, new_globals)) = circuit.execute_next_spell(&SpellState {
+                output: Output::new(0, 0),
+                player,
+                units,
+            }) {
+                for (entity, effect) in new_effects.into_iter() {
+                    let entry = &mut q_units.get_mut(entity).unwrap();
+                    entry.3 .0.push_back(effect);
+                }
+                for effect in new_globals.into_iter() {
+                    match effect {
+                        GlobalEffect::Select(select) => {
+                            commands.spawn().insert(select);
+                        }
+                        GlobalEffect::Spawn(spawn) => {
+                            commands.spawn().insert(spawn);
+                        }
                     }
                 }
+            } else {
+                commands.entity(circuit_id).despawn();
             }
         }
     }
